@@ -4,204 +4,329 @@ import Base from '../layouts/Base.astro';
 import Terminal from '../components/Terminal.astro';
 import CopyCommand from '../components/CopyCommand.astro';
 
-const demoLines = [
-  { type: 'cmd',  text: 'npx pterospeed@latest .' },
+const fullLines = [
+  { type: 'cmd',   text: 'npx pterospeed@latest full' },
   { type: 'blank', text: '' },
   { type: 'ok',   text: '✔ Detected: Pterodactyl Panel' },
   { type: 'ok',   text: '✔ Root: /var/www/pterodactyl' },
-  { type: 'dim',  text: 'Scanning build configuration...' },
-  { type: 'blank', text: '' },
-  { type: 'warn', text: '⚠ Filesystem cache missing  (high)' },
-  { type: 'warn', text: '⚠ babel-loader cache missing  (high)' },
-  { type: 'warn', text: '⚠ source-map-loader scans too wide  (medium)' },
-  { type: 'warn', text: '⚠ TerserPlugin still in production path  (medium)' },
-  { type: 'warn', text: '⚠ minimize: true always runs  (medium)' },
-  { type: 'blank', text: '' },
-  { type: 'dim',  text: '  Build Health: 20 / 100  Critical' },
-  { type: 'dim',  text: '  ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░' },
+  { type: 'ok',   text: '✔ Source files: 312' },
+  { type: 'ok',   text: '✔ Build config scanned — 20/100' },
+  { type: 'ok',   text: '✔ Panel URL: https://panel.example.com' },
+  { type: 'dim',  text: '⠙ Running Lighthouse audit — 34s elapsed…' },
+  { type: 'ok',   text: '✔ Audit complete (1m 12s)' },
+  { type: 'ok',   text: '✔ Shareable link ready: pterospeed.me/r/x7k2mq' },
 ];
 
 const optimizeLines = [
-  { type: 'cmd',   text: 'pterospeed optimize . --preset aggressive' },
+  { type: 'cmd',   text: 'pterospeed optimize --preset aggressive --auto' },
   { type: 'blank', text: '' },
   { type: 'ok',   text: '✔ Applied 5 optimization(s).' },
-  { type: 'dim',  text: '  - Switched webpack cache to filesystem.' },
-  { type: 'dim',  text: '  - Enabled babel-loader disk cache.' },
-  { type: 'dim',  text: '  - Excluded node_modules from source-map-loader.' },
-  { type: 'dim',  text: '  - Replaced TerserPlugin with EsbuildPlugin.' },
-  { type: 'dim',  text: '  - minimize: true → minimize: isProduction.' },
+  { type: 'dim',  text: '  - Filesystem cache (webpack 5)' },
+  { type: 'dim',  text: '  - babel-loader disk cache' },
+  { type: 'dim',  text: '  - source-map-loader scoped' },
+  { type: 'dim',  text: '  - EsbuildPlugin (prod minifier)' },
+  { type: 'dim',  text: '  - minimize: isProduction' },
   { type: 'blank', text: '' },
-  { type: 'green', text: '  › Production minification: ~3-4x faster' },
-  { type: 'green', text: '  › Warm dev builds: ~5-10x faster' },
-  { type: 'green', text: '  › Dev builds skip minification (~30-60s saved)' },
+  { type: 'green', text: '  › Production minify: ~3-4× faster' },
+  { type: 'green', text: '  › Warm dev builds: ~5-10× faster' },
+  { type: 'green', text: '  › Dev skips minification (~30-60s saved)' },
 ];
 
 const opts = [
   { name: 'Webpack filesystem cache', preset: 'safe',       gain: 'Warm builds 5–10× faster' },
   { name: 'babel-loader disk cache',  preset: 'safe',       gain: 'Cold builds ~20–30% faster' },
-  { name: 'Scope source-map-loader',  preset: 'safe',       gain: 'Skips node_modules map parsing' },
+  { name: 'Scope source-map-loader',  preset: 'safe',       gain: 'Skips all of node_modules' },
   { name: 'Explicit CPU parallelism', preset: 'safe',       gain: 'Full core utilization' },
-  { name: 'minimize: isProduction',   preset: 'safe',       gain: 'Dev skips minification (~30-60s)' },
+  { name: 'minimize: isProduction',   preset: 'safe',       gain: 'Dev skips minification' },
   { name: 'EsbuildPlugin (prod)',      preset: 'aggressive', gain: 'Production minify 3–4× faster' },
+];
+
+const commands = [
+  { cmd: 'pterospeed full [path]',                        desc: 'Build analysis + Lighthouse site audit in one run' },
+  { cmd: 'pterospeed analyze [path]',                     desc: 'Scan webpack config and report build health score' },
+  { cmd: 'pterospeed optimize [path]',                    desc: 'Diff → confirm → apply fixes with backup' },
+  { cmd: 'pterospeed optimize --auto',                    desc: 'Skip confirmation prompt' },
+  { cmd: 'pterospeed optimize --dry',                     desc: 'Show diff only, write nothing' },
+  { cmd: 'pterospeed optimize --preset aggressive',       desc: 'Also replace TerserPlugin → EsbuildPlugin' },
+  { cmd: 'pterospeed audit [url]',                        desc: 'Run Lighthouse against your live panel' },
+  { cmd: 'pterospeed benchmark [path]',                   desc: 'Measure cold / warm / production build times' },
+  { cmd: 'pterospeed revert [path]',                      desc: 'Restore last backup' },
+];
+
+const features = [
+  {
+    icon: '⚡',
+    title: 'Build health scoring',
+    desc: '0–100 score with per-finding detail, impact rating, and estimated time savings before you touch anything.',
+    accent: '#00ff88',
+  },
+  {
+    icon: '🔍',
+    title: 'Lighthouse site audit',
+    desc: 'Run real Lighthouse against your live panel. Core Web Vitals, performance score, and actionable issues.',
+    accent: '#00d4ff',
+  },
+  {
+    icon: '🛡',
+    title: 'AST-safe patches',
+    desc: 'Config edits use recast — preserves your formatting. No regex, no fragile string replace.',
+    accent: '#a78bfa',
+  },
+  {
+    icon: '🔗',
+    title: 'Shareable reports',
+    desc: 'Every `full` run generates a short URL at pterospeed.me/r. Share with your team in one line.',
+    accent: '#f59e0b',
+  },
+  {
+    icon: '💾',
+    title: 'Automatic backups',
+    desc: 'Snapshot saved to .pterospeed/backups before every write. `pterospeed revert` to undo instantly.',
+    accent: '#34d399',
+  },
+  {
+    icon: '📦',
+    title: 'Zero config',
+    desc: 'Auto-detects Pterodactyl, webpack version, package manager, and panel URL from .env.',
+    accent: '#fb7185',
+  },
 ];
 ---
 
 <Base>
+  <!-- Radial glow behind hero -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+    <div style="position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse at top,rgba(0,255,136,0.07) 0%,transparent 70%);"></div>
+  </div>
+
   <!-- NAV -->
-  <nav class="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-    <span class="text-[#00ff88] font-bold tracking-tight">pterospeed</span>
-    <div class="flex items-center gap-6 text-sm text-[#555]">
-      <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener" class="hover:text-[#e2e2e2] transition-colors">GitHub</a>
-      <a href="https://www.npmjs.com/package/pterospeed" target="_blank" rel="noopener" class="hover:text-[#e2e2e2] transition-colors">npm</a>
+  <nav class="sticky top-0 z-50 border-b border-white/5 backdrop-blur-md bg-[#05050a]/80">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-[#00ff88] font-bold tracking-tight text-lg font-mono">pterospeed</span>
+        <span class="hidden sm:inline text-xs bg-[#00ff8812] text-[#00ff88] border border-[#00ff8825] rounded-full px-2.5 py-0.5 font-mono">v0.4.0</span>
+      </div>
+      <div class="flex items-center gap-5 text-sm">
+        <a href="#commands" class="text-[#555] hover:text-[#e2e2e2] transition-colors hidden sm:block">Commands</a>
+        <a href="https://www.npmjs.com/package/pterospeed" target="_blank" rel="noopener"
+          class="text-[#555] hover:text-[#e2e2e2] transition-colors">npm</a>
+        <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
+          class="flex items-center gap-1.5 text-[#555] hover:text-[#e2e2e2] transition-colors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
     </div>
   </nav>
 
   <!-- HERO -->
-  <section class="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
-    <div class="inline-block bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-1.5 text-xs text-[#555] mb-8">
-      v0.1.1 — now on npm
-    </div>
-    <h1 class="text-4xl sm:text-6xl font-bold tracking-tight leading-tight mb-6">
+  <section class="max-w-5xl mx-auto px-6 pt-28 pb-20 text-center relative">
+    <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
+      class="inline-flex items-center gap-2 bg-[#00ff8808] border border-[#00ff8820] rounded-full px-4 py-1.5 text-xs text-[#00ff88] mb-10 hover:border-[#00ff8840] transition-colors font-mono">
+      <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse"></span>
+      v0.4.0 — build health + Lighthouse audit + shareable reports →
+    </a>
+
+    <h1 class="text-5xl sm:text-7xl font-bold tracking-tight leading-tight mb-6">
       Your Pterodactyl build<br />
-      <span class="text-[#00ff88]">in under 90 seconds.</span>
+      <span class="text-[#00ff88] glow-green">in under 90 seconds.</span>
     </h1>
-    <p class="text-[#555] text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-      pterospeed analyzes your webpack config, finds what's slowing it down,
-      and fixes it — automatically, with a diff preview and backup before touching anything.
+
+    <p class="text-[#666] text-lg max-w-2xl mx-auto mb-12 leading-relaxed font-normal">
+      One command analyzes your webpack config, finds what's slow,
+      runs a full Lighthouse audit, and generates a shareable report —
+      then fixes everything with a diff preview and automatic backup.
     </p>
+
     <div class="max-w-sm mx-auto mb-4">
-      <CopyCommand command="npx pterospeed@latest ." />
+      <CopyCommand command="npx pterospeed@latest full" />
     </div>
-    <p class="text-xs text-[#333]">no install required · Node 20+</p>
+    <p class="text-xs text-[#333] font-mono">no install required · Node 20+ · works on any Pterodactyl fork</p>
+
+    <!-- Stats strip -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-px mt-20 bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+      {[
+        { val: '5 min → 78s', label: 'production build' },
+        { val: '5–10×',       label: 'faster warm builds' },
+        { val: '0',           label: 'code changes needed' },
+        { val: '30s',         label: 'setup time' },
+      ].map(s => (
+        <div class="bg-[#05050a] px-6 py-6 text-center">
+          <p class="text-2xl sm:text-3xl font-bold text-[#00ff88] font-mono mb-1">{s.val}</p>
+          <p class="text-xs text-[#444]">{s.label}</p>
+        </div>
+      ))}
+    </div>
   </section>
 
   <!-- PROBLEM -->
-  <section class="max-w-5xl mx-auto px-6 py-16 border-t border-[#111]">
-    <div class="grid md:grid-cols-2 gap-12 items-center">
+  <section class="max-w-5xl mx-auto px-6 py-20 border-t border-white/5">
+    <div class="grid md:grid-cols-2 gap-16 items-center">
       <div>
-        <p class="text-xs text-[#555] uppercase tracking-widest mb-4">The problem</p>
-        <h2 class="text-2xl font-bold mb-4 leading-snug">
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-4 font-mono">The problem</p>
+        <h2 class="text-3xl font-bold mb-5 leading-snug">
           5 minutes every build.<br />
           <span class="text-[#555]">Every. Single. Time.</span>
         </h2>
-        <p class="text-[#555] leading-relaxed mb-6">
+        <p class="text-[#555] leading-relaxed mb-8 font-normal">
           The default webpack config that ships with Pterodactyl Panel was written to work,
           not to be fast. Every build starts from zero and pays the full cost.
         </p>
-        <div class="space-y-2 text-sm">
+        <div class="space-y-3 text-sm font-normal">
           {[
             'Memory-only webpack cache — lost after every process',
             'Babel re-transpiles unchanged files on every run',
             'TerserPlugin minifying even in development builds',
             'source-map-loader scanning all of node_modules',
           ].map(text => (
-            <div class="flex items-center gap-3">
-              <span class="text-red-400 shrink-0">✗</span>
-              <span class="text-[#555]">{text}</span>
+            <div class="flex items-start gap-3">
+              <span class="text-red-400 shrink-0 mt-0.5">✗</span>
+              <span class="text-[#666]">{text}</span>
             </div>
           ))}
         </div>
       </div>
-      <div class="bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg p-6 font-mono text-sm">
-        <p class="text-[#333] text-xs mb-4">$ yarn build:production</p>
-        <p class="text-[#555]">webpack compiled successfully in</p>
-        <p class="text-red-400 text-3xl font-bold my-3">352.41s</p>
-        <div class="mt-5 pt-5 border-t border-[#1a1a1a]">
-          <p class="text-[#333] text-xs mb-2">after pterospeed optimize --preset aggressive</p>
-          <p class="text-[#00ff88] text-3xl font-bold">~78s</p>
-          <p class="text-[#333] text-xs mt-1">same output · no code changes</p>
+
+      <div class="glow-card bg-[#0a0a12] border border-white/6 rounded-2xl p-8 font-mono text-sm">
+        <p class="text-[#333] text-xs mb-5">$ yarn build:production</p>
+        <p class="text-[#555] text-xs mb-1">webpack compiled in</p>
+        <p class="text-red-400 text-5xl font-bold my-3 tracking-tight">352s</p>
+        <div class="mt-6 pt-6 border-t border-white/5">
+          <p class="text-[#333] text-xs mb-2">after <span class="text-[#555]">pterospeed optimize --preset aggressive</span></p>
+          <p class="text-[#00ff88] text-5xl font-bold tracking-tight">~78s</p>
+          <p class="text-[#333] text-xs mt-2">same output · no code changes</p>
+          <div class="mt-4 flex items-center gap-2">
+            <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+              <div class="h-full bg-[#00ff88] rounded-full" style="width:22%"></div>
+            </div>
+            <span class="text-[#00ff88] text-xs font-bold">4.5× faster</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- DEMO -->
-  <section class="max-w-5xl mx-auto px-6 py-16 border-t border-[#111]">
-    <p class="text-xs text-[#555] uppercase tracking-widest mb-4">How it works</p>
-    <h2 class="text-2xl font-bold mb-10">Two commands. Done.</h2>
+  <!-- HOW IT WORKS -->
+  <section class="max-w-5xl mx-auto px-6 py-20 border-t border-white/5">
+    <p class="text-xs text-[#555] uppercase tracking-widest mb-4 font-mono">How it works</p>
+    <h2 class="text-3xl font-bold mb-3">One command. Full picture.</h2>
+    <p class="text-[#555] mb-12 font-normal max-w-xl">
+      <code class="text-[#00ff88] text-sm">pterospeed full</code> runs build analysis and Lighthouse in one flow,
+      then generates a shareable report link.
+    </p>
     <div class="grid md:grid-cols-2 gap-6">
       <div>
-        <p class="text-xs text-[#555] mb-3">1 — analyze your config</p>
-        <Terminal lines={demoLines} title="pterospeed analyze" />
+        <p class="text-xs text-[#555] mb-3 font-mono">analyze + audit in one run</p>
+        <Terminal lines={fullLines} title="pterospeed full" />
       </div>
       <div>
-        <p class="text-xs text-[#555] mb-3">2 — apply the fixes</p>
+        <p class="text-xs text-[#555] mb-3 font-mono">apply optimizations</p>
         <Terminal lines={optimizeLines} title="pterospeed optimize" />
       </div>
     </div>
   </section>
 
-  <!-- TABLE -->
-  <section class="max-w-5xl mx-auto px-6 py-16 border-t border-[#111]">
-    <p class="text-xs text-[#555] uppercase tracking-widest mb-4">Optimizations</p>
-    <h2 class="text-2xl font-bold mb-8">What gets fixed</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm border-collapse">
+  <!-- FEATURES BENTO -->
+  <section class="max-w-5xl mx-auto px-6 py-20 border-t border-white/5">
+    <p class="text-xs text-[#555] uppercase tracking-widest mb-4 font-mono">Features</p>
+    <h2 class="text-3xl font-bold mb-12">Built to be trusted.</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {features.map(f => (
+        <div class="glow-card bg-[#0a0a12] border border-white/6 rounded-2xl p-6 group cursor-default">
+          <div class="text-2xl mb-4">{f.icon}</div>
+          <h3 class="font-semibold text-[#e2e2e2] mb-2">{f.title}</h3>
+          <p class="text-[#555] text-sm leading-relaxed font-normal">{f.desc}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- OPTIMIZATIONS TABLE -->
+  <section class="max-w-5xl mx-auto px-6 py-20 border-t border-white/5">
+    <p class="text-xs text-[#555] uppercase tracking-widest mb-4 font-mono">Optimizations</p>
+    <h2 class="text-3xl font-bold mb-10">What gets fixed</h2>
+    <div class="glow-card bg-[#0a0a12] border border-white/6 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[#1e1e1e]">
-            <th class="text-left py-3 pr-8 text-[#555] font-normal">Optimization</th>
-            <th class="text-left py-3 pr-8 text-[#555] font-normal">Preset</th>
-            <th class="text-left py-3 text-[#555] font-normal">Expected gain</th>
+          <tr class="border-b border-white/5">
+            <th class="text-left px-6 py-4 text-[#444] font-normal">Optimization</th>
+            <th class="text-left px-4 py-4 text-[#444] font-normal">Preset</th>
+            <th class="text-left px-6 py-4 text-[#444] font-normal">Expected gain</th>
           </tr>
         </thead>
         <tbody>
-          {opts.map(opt => (
-            <tr class="border-b border-[#0f0f0f] hover:bg-[#0d0d0d] transition-colors">
-              <td class="py-3 pr-8 text-[#e2e2e2]">{opt.name}</td>
-              <td class="py-3 pr-8">
-                <span class={`text-xs px-2 py-0.5 rounded border ${opt.preset === 'safe' ? 'text-[#00ff88] border-[#00ff8830] bg-[#00ff8808]' : 'text-yellow-400 border-yellow-400/20 bg-yellow-400/5'}`}>
+          {opts.map((opt, i) => (
+            <tr class={`border-b border-white/4 hover:bg-white/2 transition-colors ${i === opts.length - 1 ? 'border-0' : ''}`}>
+              <td class="px-6 py-4 text-[#ccc] font-mono text-xs">{opt.name}</td>
+              <td class="px-4 py-4">
+                <span class={`text-xs px-2.5 py-1 rounded-full border font-mono ${
+                  opt.preset === 'safe'
+                    ? 'text-[#00ff88] border-[#00ff8830] bg-[#00ff8808]'
+                    : 'text-yellow-400 border-yellow-400/20 bg-yellow-400/5'
+                }`}>
                   {opt.preset}
                 </span>
               </td>
-              <td class="py-3 text-[#555]">{opt.gain}</td>
+              <td class="px-6 py-4 text-[#555] font-normal">{opt.gain}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-    <p class="mt-4 text-xs text-[#333]">After aggressive preset: run <code class="text-[#444]">yarn install</code> in your panel to install esbuild-loader.</p>
+    <p class="mt-4 text-xs text-[#333] font-normal">After aggressive preset, run <code class="text-[#444] font-mono">yarn install</code> to install esbuild-loader.</p>
   </section>
 
   <!-- COMMANDS -->
-  <section class="max-w-5xl mx-auto px-6 py-16 border-t border-[#111]">
-    <p class="text-xs text-[#555] uppercase tracking-widest mb-4">CLI</p>
-    <h2 class="text-2xl font-bold mb-8">All commands</h2>
-    <div class="space-y-0">
-      {[
-        { cmd: 'pterospeed analyze [path]',                   desc: 'Scan config and report score' },
-        { cmd: 'pterospeed optimize [path]',                  desc: 'Diff → confirm → apply fixes' },
-        { cmd: 'pterospeed optimize --auto',                  desc: 'Skip confirmation prompt' },
-        { cmd: 'pterospeed optimize --dry',                   desc: 'Show diff only, write nothing' },
-        { cmd: 'pterospeed optimize --preset aggressive',     desc: 'Also swap TerserPlugin → EsbuildPlugin' },
-        { cmd: 'pterospeed benchmark [path]',                 desc: 'Measure cold / warm / production builds' },
-        { cmd: 'pterospeed revert [path]',                    desc: 'Restore last backup' },
-      ].map(({ cmd, desc }) => (
-        <div class="flex flex-col sm:flex-row sm:gap-8 py-3 border-b border-[#0f0f0f] text-sm">
-          <code class="text-[#00ff88] shrink-0 sm:w-80 mb-1 sm:mb-0">{cmd}</code>
-          <span class="text-[#555]">{desc}</span>
+  <section id="commands" class="max-w-5xl mx-auto px-6 py-20 border-t border-white/5">
+    <p class="text-xs text-[#555] uppercase tracking-widest mb-4 font-mono">CLI Reference</p>
+    <h2 class="text-3xl font-bold mb-10">All commands</h2>
+    <div class="glow-card bg-[#0a0a12] border border-white/6 rounded-2xl overflow-hidden">
+      {commands.map(({ cmd, desc }, i) => (
+        <div class={`flex flex-col sm:flex-row sm:items-center sm:gap-8 px-6 py-4 hover:bg-white/2 transition-colors ${i < commands.length - 1 ? 'border-b border-white/4' : ''}`}>
+          <code class="text-[#00ff88] text-xs shrink-0 sm:w-72 mb-1 sm:mb-0">{cmd}</code>
+          <span class="text-[#555] text-sm font-normal">{desc}</span>
         </div>
       ))}
     </div>
   </section>
 
   <!-- CTA -->
-  <section class="max-w-5xl mx-auto px-6 py-24 border-t border-[#111] text-center">
-    <h2 class="text-3xl font-bold mb-4">Stop waiting for builds.</h2>
-    <p class="text-[#555] mb-10 text-lg">Run it right now — no install, no config, no risk. Backup created before touching anything.</p>
-    <div class="max-w-sm mx-auto mb-8">
-      <CopyCommand command="npx pterospeed@latest ." />
+  <section class="max-w-5xl mx-auto px-6 py-28 border-t border-white/5 text-center relative">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      <div style="position:absolute;bottom:-100px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse at bottom,rgba(0,255,136,0.05) 0%,transparent 70%);"></div>
     </div>
-    <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
-      class="inline-flex items-center gap-2 text-sm text-[#444] hover:text-[#00ff88] transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-      </svg>
-      ⭐ Star on GitHub
-    </a>
+
+    <h2 class="text-4xl sm:text-5xl font-bold mb-5">Stop waiting for builds.</h2>
+    <p class="text-[#555] mb-12 text-lg font-normal max-w-lg mx-auto leading-relaxed">
+      No install. No config. No risk. Backup created before touching anything.
+    </p>
+    <div class="max-w-sm mx-auto mb-8">
+      <CopyCommand command="npx pterospeed@latest full" />
+    </div>
+    <div class="flex items-center justify-center gap-6 text-sm">
+      <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
+        class="flex items-center gap-2 text-[#444] hover:text-[#00ff88] transition-colors">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        ⭐ Star on GitHub
+      </a>
+      <span class="text-[#222]">·</span>
+      <a href="https://www.npmjs.com/package/pterospeed" target="_blank" rel="noopener"
+        class="text-[#444] hover:text-[#00ff88] transition-colors">
+        📦 View on npm
+      </a>
+    </div>
   </section>
 
   <!-- FOOTER -->
-  <footer class="border-t border-[#111] px-6 py-8 text-center text-xs text-[#2a2a2a]">
-    <p>pterospeed — MIT — <a href="https://github.com/Molret" class="hover:text-[#555] transition-colors">Molret</a></p>
+  <footer class="border-t border-white/5 px-6 py-8 text-center">
+    <p class="text-xs text-[#2a2a2a] font-mono">
+      pterospeed · MIT ·
+      <a href="https://github.com/Molret" class="hover:text-[#555] transition-colors">Molret</a>
+      · built for <a href="https://pterodactyl.io" target="_blank" rel="noopener" class="hover:text-[#555] transition-colors">pterodactyl</a> builders
+    </p>
   </footer>
 </Base>
