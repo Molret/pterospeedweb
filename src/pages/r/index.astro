@@ -121,6 +121,15 @@ import CopyCommand from '../../components/CopyCommand.astro';
     return '<span class="text-[#00ff88]">✓</span>';
   }
 
+  function decodeReportPayload(encoded: string) {
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
+    return JSON.parse(json);
+  }
+
   // --- decode ---
   const params = new URLSearchParams(window.location.search);
   const encoded = params.get('d');
@@ -130,9 +139,7 @@ import CopyCommand from '../../components/CopyCommand.astro';
     document.getElementById('no-data')!.classList.remove('hidden');
   } else {
     try {
-      // base64url → JSON
-      const json = atob(encoded.replace(/-/g, '+').replace(/_/g, '/'));
-      const data = JSON.parse(json);
+      const data = decodeReportPayload(encoded);
 
       document.getElementById('loading')!.classList.add('hidden');
       document.getElementById('content')!.classList.remove('hidden');
