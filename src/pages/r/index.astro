@@ -1,46 +1,71 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ScoreBar from '../../components/ScoreBar.astro';
 import CopyCommand from '../../components/CopyCommand.astro';
 ---
 
-<Base title="pterospeed — build result" description="View pterospeed optimization result">
+<Base title="pterospeed — panel report" description="View your pterospeed panel optimization and audit report">
   <nav class="flex items-center justify-between px-6 py-5 max-w-3xl mx-auto">
     <a href="/" class="text-[#00ff88] font-bold tracking-tight hover:opacity-80 transition-opacity">pterospeed</a>
     <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
       class="text-xs text-[#555] hover:text-[#e2e2e2] transition-colors">GitHub →</a>
   </nav>
 
-  <main class="max-w-3xl mx-auto px-6 py-16" id="result">
-    <!-- loaded by JS from query params -->
-    <div id="loading" class="text-center py-20">
-      <p class="text-[#333] text-sm">Loading result...</p>
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <div id="loading" class="text-center py-20 text-[#333] text-sm">Loading report...</div>
+
+    <div id="no-data" class="hidden text-center py-20 space-y-6">
+      <p class="text-[#555]">No report data found. Run pterospeed to generate one.</p>
+      <div class="max-w-xs mx-auto">
+        <CopyCommand command="npx pterospeed@latest ." />
+      </div>
     </div>
 
     <div id="content" class="hidden space-y-10">
-      <!-- project name -->
+
+      <!-- header -->
       <div>
-        <p class="text-xs text-[#555] uppercase tracking-widest mb-2">project</p>
-        <h1 id="project-name" class="text-2xl font-bold text-[#e2e2e2]"></h1>
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-1">panel report</p>
+        <h1 id="project-name" class="text-2xl font-bold"></h1>
+        <p id="report-url" class="text-sm text-[#444] mt-1"></p>
+        <p id="report-ts" class="text-xs text-[#333] mt-0.5"></p>
       </div>
 
-      <!-- score card -->
-      <div class="bg-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-8 space-y-6">
-        <div class="flex items-start justify-between gap-6">
-          <div>
-            <p class="text-xs text-[#555] uppercase tracking-widest mb-1">build health</p>
-            <p id="score-display" class="text-5xl font-bold"></p>
+      <!-- build health section -->
+      <div id="build-section" class="hidden">
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-4">build health</p>
+        <div class="bg-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-[#555] mb-1">webpack config score</p>
+              <p id="build-score" class="text-4xl font-bold"></p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-[#555] mb-1">optimizations applied</p>
+              <p id="build-applied" class="text-4xl font-bold text-[#e2e2e2]"></p>
+            </div>
           </div>
-          <div class="text-right">
-            <p class="text-xs text-[#555] uppercase tracking-widest mb-1">optimizations applied</p>
-            <p id="applied-display" class="text-5xl font-bold text-[#e2e2e2]"></p>
+          <div id="build-bar-container"></div>
+        </div>
+      </div>
+
+      <!-- web performance section -->
+      <div id="audit-section" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-xs text-[#555] uppercase tracking-widest">web performance</p>
+          <span id="audit-strategy" class="text-xs bg-[#111] border border-[#1e1e1e] px-2 py-0.5 rounded text-[#555]"></span>
+        </div>
+        <div class="bg-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-6 space-y-5">
+          <!-- 4 lighthouse scores -->
+          <div id="lighthouse-scores" class="grid grid-cols-2 gap-4"></div>
+          <!-- issues -->
+          <div id="audit-issues" class="hidden pt-4 border-t border-[#1a1a1a]">
+            <p class="text-xs text-[#555] uppercase tracking-widest mb-3">issues found</p>
+            <div id="audit-issues-list" class="space-y-2 text-sm"></div>
           </div>
         </div>
-        <div id="score-bar-container"></div>
-        <div id="gains" class="space-y-2 pt-2 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <!-- run it on your panel -->
+      <!-- run it -->
       <div>
         <p class="text-xs text-[#555] uppercase tracking-widest mb-3">run it on your panel</p>
         <CopyCommand command="npx pterospeed@latest ." />
@@ -48,15 +73,13 @@ import CopyCommand from '../../components/CopyCommand.astro';
 
       <!-- badge -->
       <div>
-        <p class="text-xs text-[#555] uppercase tracking-widest mb-3">add a badge to your README</p>
-        <div class="flex items-center gap-4 mb-3">
-          <img id="badge-img" src="" alt="pterospeed score" class="h-5" />
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-3">add badge to README</p>
+        <div class="flex items-center gap-3 mb-3">
+          <img id="badge-img" src="" alt="pterospeed" class="h-5" />
         </div>
-        <div class="relative bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg px-4 py-3 text-xs text-[#555] font-mono">
+        <div class="relative bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg px-4 py-3 text-xs text-[#555] font-mono break-all pr-16">
           <span id="badge-md"></span>
-          <button id="copy-badge" class="absolute right-3 top-3 text-xs text-[#444] hover:text-[#00ff88] transition-colors cursor-pointer">
-            copy
-          </button>
+          <button id="copy-badge" class="absolute right-3 top-3 text-xs text-[#444] hover:text-[#00ff88] transition-colors cursor-pointer">copy</button>
         </div>
       </div>
 
@@ -71,67 +94,128 @@ import CopyCommand from '../../components/CopyCommand.astro';
           ⭐ Star on GitHub
         </a>
       </div>
+
     </div>
   </main>
 </Base>
 
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const project = params.get('p') || 'pterodactyl-panel';
-  const score = parseInt(params.get('s') || '100', 10);
-  const applied = parseInt(params.get('a') || '0', 10);
-  const gains: string[] = (params.get('g') || '').split('|').filter(Boolean);
-
-  const color = score >= 90 ? '#00ff88' : score >= 70 ? '#ffbd2e' : '#ff5f56';
-  const label = score >= 90 ? 'Great' : score >= 70 ? 'Good' : 'Needs work';
-
-  document.getElementById('loading')!.classList.add('hidden');
-  document.getElementById('content')!.classList.remove('hidden');
-
-  document.getElementById('project-name')!.textContent = project;
-
-  const scoreEl = document.getElementById('score-display')!;
-  scoreEl.textContent = `${score}/100`;
-  scoreEl.style.color = color;
-
-  document.getElementById('applied-display')!.textContent = String(applied);
-
-  // score bar
-  const barContainer = document.getElementById('score-bar-container')!;
-  const pct = `${score}%`;
-  barContainer.innerHTML = `
-    <div class="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-      <div style="width:0;background:${color}" class="h-full rounded-full transition-all duration-1000 ease-out" id="bar"></div>
-    </div>
-    <p style="color:${color}" class="text-xs mt-1">${label}</p>
-  `;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const bar = document.getElementById('bar')!;
-      bar.style.width = pct;
-    });
-  });
-
-  // gains
-  if (gains.length) {
-    const gainsEl = document.getElementById('gains')!;
-    gainsEl.innerHTML = gains.map(g =>
-      `<div class="flex items-center gap-2 text-sm"><span class="text-[#00ff88]">›</span><span class="text-[#555]">${g}</span></div>`
-    ).join('');
+  // --- helpers ---
+  function scoreColor(s: number) {
+    return s >= 90 ? '#00ff88' : s >= 50 ? '#ffbd2e' : '#ff5f56';
+  }
+  function scoreLabel(s: number) {
+    return s >= 90 ? 'Great' : s >= 50 ? 'Needs work' : 'Poor';
+  }
+  function bar(score: number, width = 100) {
+    const pct = score;
+    const color = scoreColor(score);
+    return `<div class="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+      <div style="width:0;background:${color};transition:width 1s ease-out" class="h-full rounded-full bar-anim" data-w="${pct}%"></div>
+    </div>`;
+  }
+  function auditIcon(score: number | null) {
+    if (score === null) return '<span class="text-[#555]">—</span>';
+    if (score === 0) return '<span class="text-red-400">✗</span>';
+    if (score < 0.9) return '<span class="text-yellow-400">⚠</span>';
+    return '<span class="text-[#00ff88]">✓</span>';
   }
 
-  // badge
-  const badgeUrl = `https://img.shields.io/badge/pterospeed-${score}%2F100-${score >= 90 ? '00ff88' : score >= 70 ? 'ffbd2e' : 'ff5f56'}?style=flat&logo=webpack&logoColor=white`;
-  const shareUrl = window.location.href;
-  const badgeMd = `[![pterospeed](${badgeUrl})](${shareUrl})`;
+  // --- decode ---
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('d');
 
-  (document.getElementById('badge-img') as HTMLImageElement).src = badgeUrl;
-  document.getElementById('badge-md')!.textContent = badgeMd;
+  if (!encoded) {
+    document.getElementById('loading')!.classList.add('hidden');
+    document.getElementById('no-data')!.classList.remove('hidden');
+  } else {
+    try {
+      // base64url → JSON
+      const json = atob(encoded.replace(/-/g, '+').replace(/_/g, '/'));
+      const data = JSON.parse(json);
 
-  document.getElementById('copy-badge')!.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(badgeMd);
-    const btn = document.getElementById('copy-badge')!;
-    btn.textContent = 'copied!';
-    setTimeout(() => { btn.textContent = 'copy'; }, 2000);
-  });
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('content')!.classList.remove('hidden');
+
+      // header
+      document.getElementById('project-name')!.textContent = data.project ?? 'pterodactyl-panel';
+      if (data.url) document.getElementById('report-url')!.textContent = data.url;
+      if (data.ts) {
+        document.getElementById('report-ts')!.textContent =
+          new Date(data.ts * 1000).toLocaleString();
+      }
+
+      // build section
+      if (data.build) {
+        const sec = document.getElementById('build-section')!;
+        sec.classList.remove('hidden');
+        const score = data.build.score as number;
+        const color = scoreColor(score);
+        document.getElementById('build-score')!.innerHTML =
+          `<span style="color:${color}">${score}/100</span>`;
+        document.getElementById('build-applied')!.textContent = String(data.build.applied);
+        document.getElementById('build-bar-container')!.innerHTML =
+          bar(score) + `<p style="color:${color}" class="text-xs mt-1">${scoreLabel(score)}</p>`;
+      }
+
+      // audit section
+      if (data.audit) {
+        const audit = data.audit;
+        document.getElementById('audit-section')!.classList.remove('hidden');
+        document.getElementById('audit-strategy')!.textContent = audit.strategy ?? 'desktop';
+
+        const scoresEl = document.getElementById('lighthouse-scores')!;
+        const scoreEntries: Array<[string, number]> = [
+          ['Performance', audit.scores.performance],
+          ['Accessibility', audit.scores.accessibility],
+          ['Best Practices', audit.scores.bestPractices],
+          ['SEO', audit.scores.seo],
+        ];
+        scoresEl.innerHTML = scoreEntries.map(([label, score]) => `
+          <div class="space-y-1.5">
+            <p class="text-xs text-[#555]">${label}</p>
+            ${bar(score)}
+            <p class="text-sm font-bold" style="color:${scoreColor(score)}">${score}/100</p>
+          </div>
+        `).join('');
+
+        if (audit.audits?.length) {
+          document.getElementById('audit-issues')!.classList.remove('hidden');
+          document.getElementById('audit-issues-list')!.innerHTML = audit.audits.map((a: any) => `
+            <div class="flex items-start gap-2">
+              ${auditIcon(a.score)}
+              <span class="text-[#888]">${a.title}${a.value ? ` <span class="text-[#555]">— ${a.value}</span>` : ''}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // badge — use build score if available, else perf score
+      const badgeScore = data.build?.score ?? data.audit?.scores?.performance ?? 0;
+      const badgeColor = scoreColor(badgeScore).replace('#', '');
+      const badgeUrl = `https://img.shields.io/badge/pterospeed-${badgeScore}%2F100-${badgeColor}?style=flat`;
+      const shareUrl = window.location.href;
+      const badgeMd = `[![pterospeed](${badgeUrl})](${shareUrl})`;
+
+      (document.getElementById('badge-img') as HTMLImageElement).src = badgeUrl;
+      document.getElementById('badge-md')!.textContent = badgeMd;
+      document.getElementById('copy-badge')!.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(badgeMd);
+        const btn = document.getElementById('copy-badge')!;
+        btn.textContent = 'copied!';
+        setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+      });
+
+      // animate bars
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.querySelectorAll<HTMLElement>('.bar-anim').forEach(el => {
+          el.style.width = el.dataset.w ?? '0%';
+        });
+      }));
+
+    } catch {
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('no-data')!.classList.remove('hidden');
+    }
+  }
 </script>
