@@ -1,0 +1,35 @@
+---
+interface Props {
+  score: number;
+  label?: string;
+  animated?: boolean;
+}
+const { score, label, animated = false } = Astro.props;
+const color = score >= 90 ? '#00ff88' : score >= 70 ? '#ffbd2e' : '#ff5f56';
+const pct = `${score}%`;
+---
+
+<div class="space-y-2">
+  {label && <p class="text-xs text-[#555] uppercase tracking-widest">{label}</p>}
+  <div class="flex items-center gap-4">
+    <div class="flex-1 h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+      <div
+        class={`h-full rounded-full ${animated ? 'score-bar-animated' : ''}`}
+        style={`width: ${pct}; background: ${color};`}
+      ></div>
+    </div>
+    <span class="text-sm font-bold tabular-nums" style={`color: ${color}`}>{score}/100</span>
+  </div>
+</div>
+
+{animated && (
+  <style>{`
+    .score-bar-animated {
+      width: 0 !important;
+      animation: grow 1s ease-out 0.3s forwards;
+    }
+    @keyframes grow {
+      to { width: ${pct}; }
+    }
+  `}</style>
+)}

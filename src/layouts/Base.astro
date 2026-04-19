@@ -1,0 +1,48 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'pterospeed — faster Pterodactyl builds',
+  description = 'Cut your Pterodactyl Panel build time from 5 minutes to under 90 seconds.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style is:global>
+      @import "tailwindcss";
+
+      @theme {
+        --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      html {
+        background: #080808;
+        color: #e2e2e2;
+        font-family: var(--font-mono);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      ::selection { background: #00ff8825; }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #0d0d0d; }
+      ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-[#080808] text-[#e2e2e2]">
+    <slot />
+  </body>
+</html>

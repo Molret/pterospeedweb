@@ -1,0 +1,35 @@
+---
+interface Props {
+  lines: { type: 'cmd' | 'ok' | 'warn' | 'dim' | 'green' | 'blank'; text: string }[];
+  title?: string;
+}
+const { lines, title = 'bash' } = Astro.props;
+---
+
+<div class="rounded-lg border border-[#1e1e1e] bg-[#0d0d0d] overflow-hidden text-sm">
+  <!-- titlebar -->
+  <div class="flex items-center gap-2 px-4 py-3 border-b border-[#1e1e1e] bg-[#111]">
+    <span class="w-3 h-3 rounded-full bg-[#ff5f56]"></span>
+    <span class="w-3 h-3 rounded-full bg-[#ffbd2e]"></span>
+    <span class="w-3 h-3 rounded-full bg-[#27c93f]"></span>
+    <span class="ml-3 text-xs text-[#555]">{title}</span>
+  </div>
+  <!-- body -->
+  <div class="p-5 space-y-0.5 leading-6">
+    {lines.map((line) => (
+      <div>
+        {line.type === 'cmd' && (
+          <span>
+            <span class="text-[#555]">$ </span>
+            <span class="text-[#e2e2e2]">{line.text}</span>
+          </span>
+        )}
+        {line.type === 'ok' && <span class="text-[#00ff88]">{line.text}</span>}
+        {line.type === 'warn' && <span class="text-yellow-400">{line.text}</span>}
+        {line.type === 'green' && <span class="text-[#00ff88]">{line.text}</span>}
+        {line.type === 'dim' && <span class="text-[#555]">{line.text}</span>}
+        {line.type === 'blank' && <span>&nbsp;</span>}
+      </div>
+    ))}
+  </div>
+</div>

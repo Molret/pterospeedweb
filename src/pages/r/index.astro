@@ -1,0 +1,137 @@
+---
+import Base from '../../layouts/Base.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import CopyCommand from '../../components/CopyCommand.astro';
+---
+
+<Base title="pterospeed — build result" description="View pterospeed optimization result">
+  <nav class="flex items-center justify-between px-6 py-5 max-w-3xl mx-auto">
+    <a href="/" class="text-[#00ff88] font-bold tracking-tight hover:opacity-80 transition-opacity">pterospeed</a>
+    <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
+      class="text-xs text-[#555] hover:text-[#e2e2e2] transition-colors">GitHub →</a>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-6 py-16" id="result">
+    <!-- loaded by JS from query params -->
+    <div id="loading" class="text-center py-20">
+      <p class="text-[#333] text-sm">Loading result...</p>
+    </div>
+
+    <div id="content" class="hidden space-y-10">
+      <!-- project name -->
+      <div>
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-2">project</p>
+        <h1 id="project-name" class="text-2xl font-bold text-[#e2e2e2]"></h1>
+      </div>
+
+      <!-- score card -->
+      <div class="bg-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-8 space-y-6">
+        <div class="flex items-start justify-between gap-6">
+          <div>
+            <p class="text-xs text-[#555] uppercase tracking-widest mb-1">build health</p>
+            <p id="score-display" class="text-5xl font-bold"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-[#555] uppercase tracking-widest mb-1">optimizations applied</p>
+            <p id="applied-display" class="text-5xl font-bold text-[#e2e2e2]"></p>
+          </div>
+        </div>
+        <div id="score-bar-container"></div>
+        <div id="gains" class="space-y-2 pt-2 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <!-- run it on your panel -->
+      <div>
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-3">run it on your panel</p>
+        <CopyCommand command="npx pterospeed@latest ." />
+      </div>
+
+      <!-- badge -->
+      <div>
+        <p class="text-xs text-[#555] uppercase tracking-widest mb-3">add a badge to your README</p>
+        <div class="flex items-center gap-4 mb-3">
+          <img id="badge-img" src="" alt="pterospeed score" class="h-5" />
+        </div>
+        <div class="relative bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg px-4 py-3 text-xs text-[#555] font-mono">
+          <span id="badge-md"></span>
+          <button id="copy-badge" class="absolute right-3 top-3 text-xs text-[#444] hover:text-[#00ff88] transition-colors cursor-pointer">
+            copy
+          </button>
+        </div>
+      </div>
+
+      <!-- star CTA -->
+      <div class="text-center py-8 border-t border-[#111]">
+        <p class="text-[#555] text-sm mb-4">Helped you? Give it a star.</p>
+        <a href="https://github.com/Molret/pterospeed" target="_blank" rel="noopener"
+          class="inline-flex items-center gap-2 bg-[#111] border border-[#1e1e1e] hover:border-[#00ff8840] rounded-lg px-5 py-2.5 text-sm text-[#e2e2e2] hover:text-[#00ff88] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          ⭐ Star on GitHub
+        </a>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const project = params.get('p') || 'pterodactyl-panel';
+  const score = parseInt(params.get('s') || '100', 10);
+  const applied = parseInt(params.get('a') || '0', 10);
+  const gains: string[] = (params.get('g') || '').split('|').filter(Boolean);
+
+  const color = score >= 90 ? '#00ff88' : score >= 70 ? '#ffbd2e' : '#ff5f56';
+  const label = score >= 90 ? 'Great' : score >= 70 ? 'Good' : 'Needs work';
+
+  document.getElementById('loading')!.classList.add('hidden');
+  document.getElementById('content')!.classList.remove('hidden');
+
+  document.getElementById('project-name')!.textContent = project;
+
+  const scoreEl = document.getElementById('score-display')!;
+  scoreEl.textContent = `${score}/100`;
+  scoreEl.style.color = color;
+
+  document.getElementById('applied-display')!.textContent = String(applied);
+
+  // score bar
+  const barContainer = document.getElementById('score-bar-container')!;
+  const pct = `${score}%`;
+  barContainer.innerHTML = `
+    <div class="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+      <div style="width:0;background:${color}" class="h-full rounded-full transition-all duration-1000 ease-out" id="bar"></div>
+    </div>
+    <p style="color:${color}" class="text-xs mt-1">${label}</p>
+  `;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bar = document.getElementById('bar')!;
+      bar.style.width = pct;
+    });
+  });
+
+  // gains
+  if (gains.length) {
+    const gainsEl = document.getElementById('gains')!;
+    gainsEl.innerHTML = gains.map(g =>
+      `<div class="flex items-center gap-2 text-sm"><span class="text-[#00ff88]">›</span><span class="text-[#555]">${g}</span></div>`
+    ).join('');
+  }
+
+  // badge
+  const badgeUrl = `https://img.shields.io/badge/pterospeed-${score}%2F100-${score >= 90 ? '00ff88' : score >= 70 ? 'ffbd2e' : 'ff5f56'}?style=flat&logo=webpack&logoColor=white`;
+  const shareUrl = window.location.href;
+  const badgeMd = `[![pterospeed](${badgeUrl})](${shareUrl})`;
+
+  (document.getElementById('badge-img') as HTMLImageElement).src = badgeUrl;
+  document.getElementById('badge-md')!.textContent = badgeMd;
+
+  document.getElementById('copy-badge')!.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(badgeMd);
+    const btn = document.getElementById('copy-badge')!;
+    btn.textContent = 'copied!';
+    setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+  });
+</script>

@@ -1,0 +1,29 @@
+---
+interface Props {
+  command: string;
+}
+const { command } = Astro.props;
+---
+
+<div class="flex items-center gap-3 bg-[#111] border border-[#1e1e1e] rounded-lg px-5 py-3 group">
+  <span class="text-[#555] shrink-0">$</span>
+  <code class="text-[#00ff88] flex-1 text-sm">{command}</code>
+  <button
+    id="copy-btn"
+    data-command={command}
+    class="text-xs text-[#555] hover:text-[#00ff88] transition-colors cursor-pointer shrink-0"
+    aria-label="Copy command"
+  >
+    copy
+  </button>
+</div>
+
+<script>
+  const btn = document.getElementById('copy-btn') as HTMLButtonElement;
+  btn?.addEventListener('click', async () => {
+    const cmd = btn.dataset.command ?? '';
+    await navigator.clipboard.writeText(cmd);
+    btn.textContent = 'copied!';
+    setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+  });
+</script>
